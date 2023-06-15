@@ -156,3 +156,4 @@ modules.xml
 .config/
 
 logs/
+internal_logs/
