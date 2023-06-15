@@ -155,5 +155,6 @@ modules.xml
 
 .config/
 
+appsettings.json
 logs/
 internal_logs/
