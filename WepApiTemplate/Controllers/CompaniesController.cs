@@ -3,6 +3,7 @@ using Contracts;
 using Entities.DataTransferObjects;
 using Entities.Models;
 using Microsoft.AspNetCore.Mvc;
+using WepApiTemplate.ModelBinders;
 
 namespace WepApiTemplate.Controllers;
 
@@ -66,7 +67,7 @@ public class CompaniesController : ControllerBase
     }
 
     [HttpGet("collection/({ids})", Name = "CompanyCollection")]
-    public IActionResult GetCompanyCollection(IEnumerable<Guid> ids)
+    public IActionResult GetCompanyCollection([ModelBinder(BinderType = typeof(ArrayModelBinder))]IEnumerable<Guid> ids)
     {
         if (ids is null)
         {
@@ -107,5 +108,43 @@ public class CompaniesController : ControllerBase
         var ids = string.Join(",", companyCollectionToReturn.Select(c => c.Id)); 
  
         return CreatedAtRoute("CompanyCollection", new { ids }, companyCollectionToReturn); 
+    }
+
+    [HttpDelete("{id}")]
+    public IActionResult DeleteCompany(Guid id)
+    {
+        var company = _repository.Company.GetCompany(id, trackChanges: false); 
+        if(company == null) 
+        { 
+            _logger.LogInfo($"Company with id: {id} doesn't exist in the database."); 
+            return NotFound(); 
+        } 
+ 
+        _repository.Company.DeleteCompany(company); 
+        _repository.Save(); 
+ 
+        return NoContent();
+    }
+    
+    [HttpPut("{id}")] 
+    public IActionResult UpdateCompany(Guid id, [FromBody] CompanyForUpdateDto company) 
+    { 
+        if(company == null) 
+        { 
+            _logger.LogError("CompanyForUpdateDto object sent from client is null."); 
+            return BadRequest("CompanyForUpdateDto object is null"); 
+        } 
+ 
+        var companyEntity = _repository.Company.GetCompany(id, trackChanges: true); 
+        if(companyEntity == null) 
+        { 
+            _logger.LogInfo($"Company with id: {id} doesn't exist in the database."); 
+            return NotFound(); 
+        } 
+ 
+        _mapper.Map(company, companyEntity); 
+        _repository.Save(); 
+ 
+        return NoContent(); 
     } 
 }

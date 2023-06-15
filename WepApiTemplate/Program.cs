@@ -2,6 +2,7 @@ using System.Configuration;
 using Contracts;
 using LoggerService;
 using Microsoft.AspNetCore.HttpOverrides;
+using Microsoft.AspNetCore.Mvc;
 using NLog;
 using WepApiTemplate.Extensions;
 
@@ -22,10 +23,15 @@ services.AddControllers(config =>
 {
     config.RespectBrowserAcceptHeader = true;
     config.ReturnHttpNotAcceptable = true;
-}).AddXmlDataContractSerializerFormatters()
+}).AddNewtonsoftJson()
+    .AddXmlDataContractSerializerFormatters()
     .AddCustomCSVFormatter();
 
 services.ConfigureSqlContext(builder.Configuration);
+services.Configure<ApiBehaviorOptions>(options => 
+{ 
+    options.SuppressModelStateInvalidFilter = true;
+}); 
 
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 services.AddEndpointsApiExplorer();

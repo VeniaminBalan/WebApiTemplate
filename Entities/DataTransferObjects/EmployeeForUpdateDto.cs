@@ -2,7 +2,7 @@
 
 namespace Entities.DataTransferObjects;
 
-public class EmployeeForCreationDto : EmployeeForManipulationDto
-{
-    
+public class EmployeeForUpdateDto : EmployeeForManipulationDto
+{ 
+
 }
