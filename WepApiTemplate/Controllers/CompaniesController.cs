@@ -3,6 +3,7 @@ using Contracts;
 using Entities.DataTransferObjects;
 using Entities.Models;
 using Microsoft.AspNetCore.Mvc;
+using WepApiTemplate.ActionFilters;
 using WepApiTemplate.ModelBinders;
 
 namespace WepApiTemplate.Controllers;
@@ -23,19 +24,19 @@ public class CompaniesController : ControllerBase
     }
 
     [HttpGet]
-    public IActionResult GetCompanies()
+    public async Task<IActionResult> GetCompanies()
     {
-        var companies = _repository.Company.GetAll(trackChanges: false);
+        var companies = await _repository.Company.GetAllAync(trackChanges: false);
         var companiesDto = _mapper.Map<IEnumerable<CompanyDto>>(companies);
         return Ok(companiesDto);
     }
     
     [HttpGet("{id}", Name = "CompanyById")] 
-    public IActionResult GetCompany(Guid id) 
+    public async Task<IActionResult> GetCompany(Guid id) 
     { 
-        var company = _repository.Company.GetCompany(id, trackChanges: false); 
+        var company = await _repository.Company.GetByIdAsync(id, trackChanges: false); 
         
-        if(company == null) 
+        if(company is null) 
         { 
             _logger.LogInfo($"Company with id: {id} doesn't exist in the database."); 
             return NotFound(); 
@@ -48,18 +49,13 @@ public class CompaniesController : ControllerBase
     }
 
     [HttpPost]
-    public IActionResult CreateCompany([FromBody] CompanyForCreatingDto company)
+    [ServiceFilter(typeof(ValidationFilterAttribute))]
+    public async Task<IActionResult> CreateCompany([FromBody] CompanyForCreatingDto company)
     {
-        if (company is null)
-        {
-            _logger.LogInfo("CompanyForCreationDto object sent from client is null.");
-            return BadRequest("CompanyForCreationDto object is null");
-        }
-
         var companyEntity = _mapper.Map<Company>(company);
         
         _repository.Company.CreateCompany(companyEntity);
-        _repository.Save();
+        await _repository.SaveAsync();
 
         var companyToReturn = _mapper.Map<CompanyDto>(companyEntity);
 
@@ -67,7 +63,7 @@ public class CompaniesController : ControllerBase
     }
 
     [HttpGet("collection/({ids})", Name = "CompanyCollection")]
-    public IActionResult GetCompanyCollection([ModelBinder(BinderType = typeof(ArrayModelBinder))]IEnumerable<Guid> ids)
+    public async Task<IActionResult> GetCompanyCollection([ModelBinder(BinderType = typeof(ArrayModelBinder))]IEnumerable<Guid> ids)
     {
         if (ids is null)
         {
@@ -75,7 +71,7 @@ public class CompaniesController : ControllerBase
             return BadRequest("Parameter ids is null"); 
         }
         
-        var companyEntities = _repository.Company.GetByIds(ids, trackChanges: false); 
+        var companyEntities = await _repository.Company.getByIdsAsync(ids, trackChanges: false); 
         
         if(ids.Count() != companyEntities.Count()) 
         { 
@@ -88,9 +84,9 @@ public class CompaniesController : ControllerBase
     }
     
     [HttpPost("collection")] 
-    public IActionResult CreateCompanyCollection([FromBody] IEnumerable<CompanyForCreatingDto> companyCollection) 
+    public async Task<IActionResult> CreateCompanyCollection([FromBody] IEnumerable<CompanyForCreatingDto> companyCollection) 
     { 
-        if(companyCollection == null) 
+        if(companyCollection is null) 
         { 
             _logger.LogError("Company collection sent from client is null."); 
             return BadRequest("Company collection is null"); 
@@ -102,7 +98,7 @@ public class CompaniesController : ControllerBase
             _repository.Company.CreateCompany(company); 
         } 
  
-        _repository.Save(); 
+        await _repository.SaveAsync(); 
  
         var companyCollectionToReturn = _mapper.Map<IEnumerable<CompanyDto>>(companyEntities); 
         var ids = string.Join(",", companyCollectionToReturn.Select(c => c.Id)); 
@@ -111,39 +107,25 @@ public class CompaniesController : ControllerBase
     }
 
     [HttpDelete("{id}")]
-    public IActionResult DeleteCompany(Guid id)
+    [ServiceFilter(typeof(ValidateCompanyExistsAttribute))] 
+    public async Task<IActionResult> DeleteCompany(Guid id)
     {
-        var company = _repository.Company.GetCompany(id, trackChanges: false); 
-        if(company == null) 
-        { 
-            _logger.LogInfo($"Company with id: {id} doesn't exist in the database."); 
-            return NotFound(); 
-        } 
+        var company = HttpContext.Items["company"] as Company;
  
         _repository.Company.DeleteCompany(company); 
-        _repository.Save(); 
+        await _repository.SaveAsync(); 
  
         return NoContent();
     }
     
     [HttpPut("{id}")] 
-    public IActionResult UpdateCompany(Guid id, [FromBody] CompanyForUpdateDto company) 
-    { 
-        if(company == null) 
-        { 
-            _logger.LogError("CompanyForUpdateDto object sent from client is null."); 
-            return BadRequest("CompanyForUpdateDto object is null"); 
-        } 
- 
-        var companyEntity = _repository.Company.GetCompany(id, trackChanges: true); 
-        if(companyEntity == null) 
-        { 
-            _logger.LogInfo($"Company with id: {id} doesn't exist in the database."); 
-            return NotFound(); 
-        } 
- 
+    [ServiceFilter(typeof(ValidationFilterAttribute))]
+    [ServiceFilter(typeof(ValidateCompanyExistsAttribute))] 
+    public async Task<IActionResult> UpdateCompany(Guid id, [FromBody] CompanyForUpdateDto company)
+    {
+        var companyEntity = HttpContext.Items["company"] as Company;
         _mapper.Map(company, companyEntity); 
-        _repository.Save(); 
+        await _repository.SaveAsync(); 
  
         return NoContent(); 
     } 

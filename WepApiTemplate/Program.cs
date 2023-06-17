@@ -4,6 +4,7 @@ using LoggerService;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Mvc;
 using NLog;
+using WepApiTemplate.ActionFilters;
 using WepApiTemplate.Extensions;
 
 LogManager.Setup().LoadConfigurationFromFile(string.Concat(Directory.GetCurrentDirectory(), "/nlog.config"));
@@ -18,6 +19,8 @@ services.ConfigureISSIntegration();
 services.ConfigureLoggerService();
 services.ConfigureRepositoryManager();
 services.AddAutoMapper(typeof(Program));
+services.AddScoped<ValidationFilterAttribute>();
+services.AddScoped<ValidateCompanyExistsAttribute>();
 
 services.AddControllers(config =>
 {
