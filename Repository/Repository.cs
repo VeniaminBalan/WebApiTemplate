@@ -8,7 +8,7 @@ namespace Repository;
 public class Repository<T> : IRepository<T> where T : class
 {
     private readonly AppDbContext _appDbContext;
-    public Repository(AppDbContext appDbContext)
+    protected Repository(AppDbContext appDbContext)
     {
         _appDbContext = appDbContext;
     }
@@ -28,8 +28,6 @@ public class Repository<T> : IRepository<T> where T : class
                 .Where(expression);  
 
     public void Create(T entity) => _appDbContext.Set<T>().Add(entity); 
- 
     public void Update(T entity) => _appDbContext.Set<T>().Update(entity); 
- 
     public void Delete(T entity) => _appDbContext.Set<T>().Remove(entity); 
 }

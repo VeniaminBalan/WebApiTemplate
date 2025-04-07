@@ -1,9 +1,11 @@
 using System.Configuration;
 using Contracts;
+using Entities.DataTransferObjects;
 using LoggerService;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Mvc;
 using NLog;
+using Repository.DataShaping;
 using WepApiTemplate.ActionFilters;
 using WepApiTemplate.Extensions;
 
@@ -21,6 +23,8 @@ services.ConfigureRepositoryManager();
 services.AddAutoMapper(typeof(Program));
 services.AddScoped<ValidationFilterAttribute>();
 services.AddScoped<ValidateCompanyExistsAttribute>();
+services.AddScoped<ValidateEmployeeForCompanyExistsAttribute>();
+services.AddScoped<IDataShaper<EmployeeDto>, DataShaper<EmployeeDto>>();
 
 services.AddControllers(config =>
 {

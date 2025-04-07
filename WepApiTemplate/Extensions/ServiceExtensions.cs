@@ -34,7 +34,6 @@ public static class ServiceExtensions
         services.AddTransient<ILoggerManager, LoggerManager>();
     }
     
-
     public static void ConfigureSqlContext(this IServiceCollection services, IConfiguration configuration) =>
         services.AddDbContext<AppDbContext>(opts =>
             opts.UseMySQL(configuration.GetConnectionString("sqlConnection"), b => 
